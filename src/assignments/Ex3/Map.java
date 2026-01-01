@@ -153,7 +153,7 @@ public class Map implements Map2D {
 	 * BFS like shortest the computation based on iterative raster implementation of BFS, see:
 	 * https://en.wikipedia.org/wiki/Breadth-first_search
 	 */
-	public Pixel2D[] shortestPath(Pixel2D p1, Pixel2D p2, int obsColor) {
+    public Pixel2D[] shortestPath(Pixel2D p1, Pixel2D p2, int obsColor) {
         if(p1.equals(p2)){
             return new Pixel2D[]{p1};
         }
@@ -201,7 +201,8 @@ public class Map implements Map2D {
             temp = findPreviousNeighbor(temp, dists,_cyclicFlag);
         }
         return path;
-	}
+
+    }
 	@Override
 	public boolean isInside(Pixel2D p) {
         boolean ans = true;

@@ -49,23 +49,24 @@ public class Ex3Algo implements PacManAlgo{
         String[] s= pos.split(",");
         int x= Integer.parseInt(s[0]);
         int y= Integer.parseInt(s[1]);
+
+
         Map2D map= new Map (board);
         Pixel2D xy=new Index2D(x,y);
         Map2D dists= map.allDistance(xy,blue);
         Pixel2D closestPink = closestPink(map,dists);
-		_count++;
-		int dir = moveTo(xy,closestPink,map);
-//        int dir=randomDir();
-		return dir;
+
+        _count++;
+		return moveTo(xy,closestPink,map);
 	}
     public static Pixel2D closestPink(Map2D map, Map2D dists) {
         Pixel2D ans=null;
         int pink=Game.getIntColor(Color.PINK, 0);
-        int minDist=-20;
+        int minDist=Integer.MAX_VALUE;
         for (int x=0;x<map.getWidth();x++){
             for (int y=0;y<map.getHeight();y++){
                 if(map.getPixel(x,y)==pink){
-                    if (minDist==-20 || minDist>dists.getPixel(x,y)){
+                    if (minDist!=-1 && minDist>dists.getPixel(x,y)){
                         minDist=dists.getPixel(x,y);
                         ans= new Index2D(x,y);
                     }
@@ -77,12 +78,12 @@ public class Ex3Algo implements PacManAlgo{
 
     public static Pixel2D closestGreen(Map2D map, Map2D dists) {
         Pixel2D ans=null;
-        int green = Game.getIntColor(Color.GREEN, 0);
-        int minDist= -20;
+        int green = Game.getIntColor(Color.GREEN,0);
+        int minDist=Integer.MAX_VALUE;
         for (int x=0;x<map.getWidth();x++){
             for (int y=0;y<map.getHeight();y++){
                 if(map.getPixel(x,y)==green){
-                    if (minDist==-20 || minDist>dists.getPixel(x,y)){
+                    if (minDist!=-1 && minDist>dists.getPixel(x,y)){
                         minDist=dists.getPixel(x,y);
                         ans= new Index2D(x,y);
                     }
@@ -117,22 +118,25 @@ public class Ex3Algo implements PacManAlgo{
         int[] dirs = {Game.UP, Game.LEFT, Game.DOWN, Game.RIGHT};
         int blue = Game.getIntColor(Color.BLUE, 0);
         Pixel2D[] arr= map.shortestPath(pos,target,blue);
-        Pixel2D next=arr[1];
-        if (map.isCyclic()) {
-            if(pos.getY()+1==target.getY()){return dirs[0];}
-            if(pos.getX()+1==target.getX()){return dirs[1];}
-            if(pos.getY()-1==target.getY()){return dirs[2];}
-            else return dirs[3];
-        }
-        if((next.getY()+1)%map.getHeight() ==pos.getY())
-            return dirs[0];
-        if((next.getX()+1)%map.getWidth() ==pos.getX())
-            return dirs[1];
-        if((next.getY()+1)%map.getHeight() ==pos.getY())
-            return dirs[2];
-//        if((next.getX()+1)%map.getWidth() ==pos.getX())
-        else return dirs[3];
-//        return dirs[3];
-//        return randomDir();
+        Pixel2D next;
+        if(arr!=null&&arr.length>1){next=arr[1];}
+        else return randomDir();
+
+        int x=pos.getX();
+        int y=pos.getY();
+        int w=map.getWidth();
+        int h=map.getHeight();
+        //up
+        if((y+1)%h==next.getY()){return dirs[0];}
+        //left
+        if((x-1+w)%w==next.getX()){return dirs[1];}
+        //down
+        if((y-1+h)%h==next.getY()){return dirs[2];}
+        //right
+        if((x+1+w)%w==next.getX()){return dirs[3];}
+
+        return randomDir();
     }
+
+//    private static Pixel2D runAway(){}
 }
