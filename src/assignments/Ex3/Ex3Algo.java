@@ -56,51 +56,44 @@ public class Ex3Algo implements PacManAlgo {
         int black = Game.getIntColor(Color.BLACK, 0);
         int green = Game.getIntColor(Color.GREEN, 0);
         int[][] board = game.getGame(0);
-        String pos = game.getPos(0).toString();
-        String[] s = pos.split(",");
-        int x = Integer.parseInt(s[0]);
-        int y = Integer.parseInt(s[1]);
-
 
         Map2D map = new Map(board);
-        Pixel2D xy = new Index2D(x, y);
-        Map2D dists = map.allDistance(xy, blue);
+        Pixel2D pacmanPos = getPacmanPos(game);
+        Map2D dists = map.allDistance(pacmanPos, blue);
         int minDistInd = Integer.MAX_VALUE;
         for (int i = ghosts.length - 1; i >= 0; i--) {
             String[] t = ghosts[i].getPos(i).split(",");
             int gX = Integer.parseInt(t[0]);
             int gY = Integer.parseInt(t[1]);
             Pixel2D gInd = new Index2D(gX, gY);
-            if (map.shortestPath(xy, gInd, blue).length <= minDistInd) {
+            if (map.shortestPath(pacmanPos, gInd, blue).length <= minDistInd) {
                 minDistInd = i;
             }
         }
-        /**int closestGhostIndex=getClosestGhostIndex(ghosts,xy,map);
-         if((getClosestGhostDist(ghosts,xy,map)<=6 && ghosts[closestGhostIndex].remainTimeAsEatable(0)<=0))
-         {if( runAway(xy,map,ghosts)!=-1) return runAway(xy,map,ghosts);}
-         Pixel2D closestGreen = closestGreen(map,dists);
-         if (dists.getPixel(closestGreen)<=2) {return moveTo(xy,closestGreen,map);}
-         if( closestGhostIndex<=8 && ghosts[closestGhostIndex].remainTimeAsEatable(0)>0 ) {
-         int gX= Integer.parseInt( ghosts[closestGhostIndex].getPos(0).split(",")[0]);
-         int gY= Integer.parseInt( ghosts[closestGhostIndex].getPos(0).split(",")[1]);
-         Pixel2D gPos= new Index2D(gX,gY);
-         return chaseGhost(xy, gPos,map);}**/
-
         Pixel2D closestGreen = closestGreen(map, dists);
         Pixel2D closestPink = closestPink(map, dists);
         _count++;
-        int state = getState(map, ghosts, xy);
-        if (state != PINK) System.out.println("State: " + state);
+        int state = getState(map, ghosts, pacmanPos);
+        if (state != PINK)
+            System.out.println("State: " + state);
         if (state == PINK)
-            return moveTo(xy, closestPink, map);
+            return moveTo(pacmanPos, closestPink, map);
         if (state == BLACK)
-            return runAway(xy, map, ghosts);
+            return runAway(pacmanPos, map, ghosts);
         if (state == WHITE) {
-            return chaseGhost(xy, ghosts, map);
+            return chaseGhost(pacmanPos, ghosts, map);
         }
         if (state == GREEN)
-            return moveTo(xy, closestGreen, map);
+            return moveTo(pacmanPos, closestGreen, map);
         else return randomDir();
+    }
+    public static Index2D getPacmanPos (PacmanGame game){
+        String pos = game.getPos(0).toString();
+        String [] p = pos.split(",");
+        int pacmanX = Integer.parseInt(p[0]);
+        int pacmanY = Integer.parseInt(p[1]);
+
+        return new Index2D(pacmanX, pacmanY);
     }
 
     public static Pixel2D closestPink(Map2D map, Map2D dists) {
@@ -160,75 +153,82 @@ public class Ex3Algo implements PacManAlgo {
         return dirs[ind];
     }
 
+    /**
+     * move toward a chosen pixel
+     * @param pos - pacman position
+     * @param target - target pixel
+     * @param map - game map
+     * @return - the direction pacman has to move to
+     */
     private static int moveTo(Pixel2D pos, Pixel2D target, Map2D map) {
-        int[] dirs = {Game.UP, Game.LEFT, Game.DOWN, Game.RIGHT};
         int blue = Game.getIntColor(Color.BLUE, 0);
-        Pixel2D[] arr = map.shortestPath(pos, target, blue);
-        Pixel2D next;
-        if (arr != null && arr.length > 1) {
-            next = arr[1];
-        } else return randomDir();
+        Pixel2D[] path = map.shortestPath(pos, target, blue);
 
-        int x = pos.getX();
-        int y = pos.getY();
-        int w = map.getWidth();
-        int h = map.getHeight();
-        //up
-        if ((y + 1) % h == next.getY()) {
-            return dirs[0];
+        if (path == null || path.length < 2) return randomDir();
+
+        Pixel2D next = path[1];
+        int x1 = pos.getX(), y1 = pos.getY();
+        int x2 = next.getX(), y2 = next.getY();
+
+        // בדיקת ציר X (כולל מעבר ציקלי)
+        if (x2 != x1) {
+            if (x2 > x1) {
+                // אם המרחק גדול מ-1, זה אומר שדילגנו מהקצה השמאלי לימני דרך המנהרה
+                return (x2 - x1 > 1) ? Game.LEFT : Game.RIGHT;
+            } else {
+                // אם המרחק גדול מ-1, זה אומר שדילגנו מהקצה הימני לשמאלי
+                return (x1 - x2 > 1) ? Game.RIGHT : Game.LEFT;
+            }
         }
-        //left
-        if ((x - 1 + w) % w == next.getX()) {
-            return dirs[1];
-        }
-        //down
-        if ((y - 1 + h) % h == next.getY()) {
-            return dirs[2];
-        }
-        //right
-        if ((x + 1 + w) % w == next.getX()) {
-            return dirs[3];
+
+        // בדיקת ציר Y (כולל מעבר ציקלי)
+        if (y2 != y1) {
+            if (y2 > y1) {
+                // אם ה-Y גדל ביותר מ-1, עברנו מלמטה למעלה (או הפוך, תלוי במערכת הצירים)
+                return (y2 - y1 > 1) ? Game.DOWN : Game.UP;
+            } else {
+                return (y1 - y2 > 1) ? Game.UP : Game.DOWN;
+            }
         }
 
         return randomDir();
     }
 
     /**
-     * gets pacMan pos and dists map of distances from the closest ghost
-     *
+     * gets pacMan pos and array of ghosts
+     * goes to the closest pixel furthest from the closest ghost
      * @param pPos
      * @return
      */
     private static int runAway(Pixel2D pPos, Map2D map, GhostCL[] ghosts) {
         int blue = Game.getIntColor(Color.BLUE, 0);
-        int[] dirs = {Game.UP, Game.LEFT, Game.DOWN, Game.RIGHT};
-        int pX = pPos.getX(), pY = pPos.getY(), w = map.getWidth(), h = map.getHeight();
-        int distFromG = getClosestGhostDist(ghosts, pPos, map);
-        GhostCL cGhost = ghosts[getClosestGhostIndex(ghosts, pPos, map)];
-        int gX = Integer.parseInt(cGhost.getPos(0).split(",")[0]);
-        int gY = Integer.parseInt(cGhost.getPos(0).split(",")[1]);
-        if (gX == 11 && gY == 11) {//avoid center-so pacman doesn't get stuck.
+        int pX = pPos.getX(), pY = pPos.getY();
+        int w = map.getWidth(), h = map.getHeight();
+
+        int closestIdx = getClosestGhostIndex(ghosts, pPos, map);
+        GhostCL cGhost = ghosts[closestIdx];
+        Pixel2D gPos = getGhostPos(cGhost);
+        if (gPos.getX() == 11 && gPos.getY() == 11) { // so pacman doesn't get stuck
             return -1;
         }
-        Pixel2D cInd = new Index2D(gX, gY);
-        Map2D distsFromG = map.allDistance(cInd, blue);
-        //up
-        if (distsFromG.getPixel(pPos) < ((pY + distFromG) % h) + 1) {
-            return dirs[0];
+        Map2D distsFromGhost = map.allDistance(gPos, blue);
+        int bestDir = -1;
+        int maxDist = -1;
+        int[] dirCodes = {Game.UP, Game.LEFT, Game.DOWN, Game.RIGHT};
+        int[] dx = {0, -1, 0, 1};
+        int[] dy = {1, 0, -1, 0};
+
+        for (int i = 0; i < 4; i++) {
+            int nextX = (pX + dx[i] + w) % w;
+            int nextY = (pY + dy[i] + h) % h;
+            if (map.getPixel(nextX, nextY) == blue) continue;
+            int dist = distsFromGhost.getPixel(nextX, nextY);
+            if (dist > maxDist) {
+                maxDist = dist;
+                bestDir = dirCodes[i];
+            }
         }
-        //left
-        if (distsFromG.getPixel(pPos) < ((pX - distFromG + w) % w) + 1) {
-            return dirs[1];
-        }
-        //down
-        if (distsFromG.getPixel(pPos) < ((pY - distFromG + h) % h) + 1) {
-            return dirs[2];
-        }
-        //right
-        if (distsFromG.getPixel(pPos) < ((pX + distFromG + w) % w) + 1) {
-            return dirs[3];
-        }
-        return randomDir();
+        return (bestDir != -1) ? bestDir : randomDir();
     }
 
     /**
@@ -241,91 +241,104 @@ public class Ex3Algo implements PacManAlgo {
      */
     private static int getClosestGhostDist(GhostCL[] gs, Pixel2D pPos, Map2D map) {
         int blue = Game.getIntColor(Color.BLUE, 0);
-//        int minDist = Integer.MAX_VALUE;
         int ind = getClosestGhostIndex(gs, pPos, map);
         String s = gs[ind].getPos(0);
         int gX = Integer.parseInt(s.split(",")[0]);
         int gY = Integer.parseInt(s.split(",")[1]);
         Pixel2D gP = new Index2D(gX, gY);
-        //change
         int minDist = map.shortestPath(pPos, gP, blue).length ;
         return minDist;
     }
 
+    /**
+     * @param gs - array of ghosts
+     * @param pPos - pacman position
+     * @param map - map of game
+     * @return the index in the array, of the closest ghost
+     */
     private static int getClosestGhostIndex(GhostCL[] gs, Pixel2D pPos, Map2D map) {
         int blue = Game.getIntColor(Color.BLUE, 0);
         int index = Integer.MAX_VALUE;
-        for (int i = 0; i < gs.length - 2; i++) {
-            String s = gs[i].getPos(0);
-            int gX = Integer.parseInt(s.split(",")[0]);
-            int gY = Integer.parseInt(s.split(",")[1]);
-            Pixel2D p = new Index2D(gX, gY);
-            Map2D gMap1 = map.allDistance(p, blue);
-            int dist = gMap1.shortestPath(p, pPos, blue).length;
-            Map2D gMap2 = map.allDistance(p, blue);
-            int nextDist = gMap2.shortestPath(p, pPos, blue).length;
-            if (dist <= nextDist) {
-                index = i;
+        GhostCL closeGhost = getClosestGhostAsGhost(gs, pPos, map);
+        for (int i = 0; i < gs.length; i++) {
+            if (gs[i].equals(closeGhost)){
+                return i;
             }
-            ;
         }
         return index;
     }
 
-    private static int chaseGhost(Pixel2D pPos, GhostCL[] ghosts, Map2D map) {
-        int[] dirs = {Game.UP, Game.LEFT, Game.DOWN, Game.RIGHT};
+    /**
+     * @param ghosts - array of ghosts
+     * @param pacmanPos - pacman position
+     * @param gameMap - map of game
+     * @return - the GhostCL ghost closest
+     */
+    public static GhostCL getClosestGhostAsGhost(GhostCL[] ghosts, Pixel2D pacmanPos,Map2D gameMap){
+        GhostCL finalGhostPos = ghosts[0];
         int blue = Game.getIntColor(Color.BLUE, 0);
-        int closestInd= getClosestGhostIndex(ghosts, pPos, map);
-        GhostCL closestGhost= ghosts[closestInd];
-        int gX = Integer.parseInt(closestGhost.getPos(0).split(",")[0]);
-        int gY = Integer.parseInt(closestGhost.getPos(0).split(",")[1]);
-        Pixel2D gPos = new Index2D(gX, gY);
-        Map2D gDists = map.allDistance(gPos, blue);
-        int x = pPos.getX();
-        int y = pPos.getY();
-        int w = map.getWidth();
-        int h = map.getHeight();
-        //up
-        if (gDists.getPixel(pPos) < gDists.getPixel(x, y + 1)) {
-            return dirs[0];
+        int dis = -1;
+        for(GhostCL g: ghosts){
+            Pixel2D currentGhost = getGhostPos(g);
+            int currentDis = gameMap.shortestPath(pacmanPos, currentGhost, blue).length;
+
+            if (dis == -1 || currentDis < dis){
+                finalGhostPos = g;
+                dis = currentDis;
+            }
         }
-        //left
-        if (gDists.getPixel(pPos) < gDists.getPixel((x - 1), y)) {
-            return dirs[1];
-        }
-        //down
-        if (gDists.getPixel(pPos) < gDists.getPixel(x, (y - 1))) {
-            return dirs[2];
-        }
-        //right
-        if (gDists.getPixel(pPos) < gDists.getPixel((x + 1), y)) {
-            return dirs[3];
-        }
-        return dirs[2];
+        return finalGhostPos;
     }
 
+    /**
+     *
+     * @param ghost - ghost as GhostCL
+     * @return the pixel position in the map of the ghost
+     */
+    public static Pixel2D getGhostPos(GhostCL ghost){
+        String pos = ghost.getPos(0).toString();
+        String [] p = pos.split(",");
+        int ghostY = Integer.parseInt(p[1]);
+        int ghostX = Integer.parseInt(p[0]);
+
+        return new Index2D(ghostX, ghostY);
+    }
+
+    /**
+     * @param pPos - pacman position
+     * @param ghosts - array of ghosts
+     * @param map - game map
+     * @return the func moveTo, towards the ghost
+     */
+    private int chaseGhost(Pixel2D pPos, GhostCL[] ghosts, Map2D map) {
+        int indx = getClosestGhostIndex(ghosts, pPos, map);
+        return moveTo(pPos, getGhostPos(ghosts[indx]), map);
+    }
+
+    /** if a ghost is closer than 3 steps-run away and time eatable<=0: BLACK
+     * if a ghost's time as eatable >0.5-chase ghost: WHITE
+     * if green is 2 or less steps from me AND closest ghost is >2 steps away-go to green: GREEN
+     * else; PINK
+     */
     private static int getState(Map2D map, GhostCL[] ghosts, Pixel2D pPos) {
         int blue = Game.getIntColor(Color.BLUE, 0);
         int pink = Game.getIntColor(Color.PINK, 0);
         int black = Game.getIntColor(Color.BLACK, 0);
         int green = Game.getIntColor(Color.GREEN, 0);
 
-
-        /** if a ghost is closer than 3 steps-run away and time eatable<=0: BLACK
-         * if a ghost's time as eatable >0.5-chase ghost: WHITE
-         * if green is 2 or less steps from me AND closest ghost is >2 steps away-go to green: GREEN
-         * else; PINK
-         */
         Map2D dists = map.allDistance(pPos, blue);
         int closestGhostIndex = getClosestGhostIndex(ghosts, pPos, map);
-        if ((getClosestGhostDist(ghosts, pPos, map) <= 6 && ghosts[closestGhostIndex].remainTimeAsEatable(0) <= 0)) {
+        System.out.println(ghosts[closestGhostIndex].getPos(0));
+        System.out.println(pPos.toString());
+
+        if ((getClosestGhostDist(ghosts, pPos, map) <= 8 && ghosts[closestGhostIndex].remainTimeAsEatable(0) <= 0)) {
             if (runAway(pPos, map, ghosts) != -1) return BLACK;}
 
         Pixel2D closestGreen = closestGreen(map, dists);
-        if (dists.getPixel(closestGreen) <= 2) {
+        if (dists.getPixel(closestGreen) <= 2 && closestGreen!=null) {
             return GREEN;
         }
-        if (getClosestGhostDist(ghosts,pPos,map) <= 6 && ghosts[closestGhostIndex].remainTimeAsEatable(0) > 0) {
+        if (getClosestGhostDist(ghosts,pPos,map) <= 6 && ghosts[closestGhostIndex].remainTimeAsEatable(0) > 0.5) {
             return WHITE;
         }
 
