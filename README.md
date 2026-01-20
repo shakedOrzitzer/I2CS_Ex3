@@ -1,6 +1,6 @@
 # Pac-Man: Ex3Algo Implementation
 
-The Ex3Algo class automates Pac-Man gameplay using a robust Finite State Machine (FSM) and BFS pathfinding. This combination allows the agent to navigate the maze efficiently, maximizing scores while intelligently outmaneuvering ghosts.
+The Ex3Algo class automates Pac-Man gameplay using a State Machine and BFS pathfinding. This combination allows the pacman to navigate the maze efficiently, maximizing scores while intelligently outmaneuvering ghosts.
 
 ---
 
