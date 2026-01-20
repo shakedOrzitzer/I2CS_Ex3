@@ -90,13 +90,13 @@ public class Ex3Algo implements PacManAlgo {
         Pixel2D closestPink = closestPink(map, dists);
         _count++;
         int state = getState(map, ghosts, xy);
-        System.out.println("State: " + state);
+        if (state != PINK) System.out.println("State: " + state);
         if (state == PINK)
             return moveTo(xy, closestPink, map);
         if (state == BLACK)
             return runAway(xy, map, ghosts);
         if (state == WHITE) {
-            return chaseGhost(xy, ghosts, map);//change 2nd xy to ghostPos
+            return chaseGhost(xy, ghosts, map);
         }
         if (state == GREEN)
             return moveTo(xy, closestGreen, map);
@@ -207,25 +207,25 @@ public class Ex3Algo implements PacManAlgo {
         GhostCL cGhost = ghosts[getClosestGhostIndex(ghosts, pPos, map)];
         int gX = Integer.parseInt(cGhost.getPos(0).split(",")[0]);
         int gY = Integer.parseInt(cGhost.getPos(0).split(",")[1]);
-        if (gX == 11 && gY == 11) {
+        if (gX == 11 && gY == 11) {//avoid center-so pacman doesn't get stuck.
             return -1;
         }
         Pixel2D cInd = new Index2D(gX, gY);
         Map2D distsFromG = map.allDistance(cInd, blue);
         //up
-        if (distsFromG.getPixel(pPos) < ((pY + 1) % h) + 1) {
+        if (distsFromG.getPixel(pPos) < ((pY + distFromG) % h) + 1) {
             return dirs[0];
         }
         //left
-        if (distsFromG.getPixel(pPos) < ((pX - 1 + w) % w) + 1) {
+        if (distsFromG.getPixel(pPos) < ((pX - distFromG + w) % w) + 1) {
             return dirs[1];
         }
         //down
-        if (distsFromG.getPixel(pPos) < ((pY - 1 + h) % h) + 1) {
+        if (distsFromG.getPixel(pPos) < ((pY - distFromG + h) % h) + 1) {
             return dirs[2];
         }
         //right
-        if (distsFromG.getPixel(pPos) < ((pX + 1 + w) % w) + 1) {
+        if (distsFromG.getPixel(pPos) < ((pX + distFromG + w) % w) + 1) {
             return dirs[3];
         }
         return randomDir();
@@ -241,14 +241,14 @@ public class Ex3Algo implements PacManAlgo {
      */
     private static int getClosestGhostDist(GhostCL[] gs, Pixel2D pPos, Map2D map) {
         int blue = Game.getIntColor(Color.BLUE, 0);
-        int minDist = Integer.MAX_VALUE;
+//        int minDist = Integer.MAX_VALUE;
         int ind = getClosestGhostIndex(gs, pPos, map);
         String s = gs[ind].getPos(0);
         int gX = Integer.parseInt(s.split(",")[0]);
         int gY = Integer.parseInt(s.split(",")[1]);
         Pixel2D gP = new Index2D(gX, gY);
         //change
-        minDist = map.shortestPath(pPos, gP, blue).length - 1;
+        int minDist = map.shortestPath(pPos, gP, blue).length ;
         return minDist;
     }
 
